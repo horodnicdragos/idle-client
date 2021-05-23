@@ -442,7 +442,7 @@ const globalConfigs = {
     },
     RootChainManager:{
       abi:RootChainManager,
-      address:'0x8829EC24A1BcaCdcF4a3CBDE3A4498172e9FCDcE' // Goerli
+      address:'0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74' // Goerli
       // address:'0xD4888faB8bd39A663B63161F5eE1Eae31a25B653' // Mainnet
     },
     ChildChainManager:{
@@ -531,7 +531,7 @@ const globalConfigs = {
             feePercentage: 0.0025
         },
       },
-    },
+    }
   },
   strategies:{
     best:{
@@ -1233,7 +1233,7 @@ const globalConfigs = {
           ERC20Predicate:{
             abi:null,
             name:'ERC20Predicate',
-            address:'0x033a0A06dc6e78a518003C81B64f9CA80A55cb06', // Goerli
+            address:'0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34', // Goerli
             // address:'0x886e02327cAd4E1E29688C7Db0c9d28879ac44Da' // Mainnet
           }
         },
@@ -1317,7 +1317,6 @@ const globalConfigs = {
         },
       }
     },
->>>>>>> 6d8b61e (NEW: Mumbai test)
     stake:{
       enabled:true,
       icon:'Layers',
@@ -1472,6 +1471,7 @@ const globalConfigs = {
       depositEnabled:true,
       route:'batch-deposit',
       label:'Batch Deposit',
+      availableNetworks:[1],
       subComponent:BatchDeposit,
       desc:'Deposit your tokens in the batch and wait until its execution to claim your Idle Tokens V4',
       props:{
@@ -2483,7 +2483,7 @@ const globalConfigs = {
         subcaption:`~ 1.5% fee ~\nALL CURRENCIES`,
         supportedMethods:['bank','card'],
         supportedCountries:['USA','GBR','AUS','BRA','CHN','MEX','EUR','IND'],
-        supportedTokens:['ETH','DAI','USDC','USDT','TUSD','SUSD','WBTC'],
+        supportedTokens:['ETH','DAI','USDC','USDT','TUSD','SUSD','WBTC','MATIC'],
         remoteResources:{'https://global.transak.com/v1/widget.js':{}},
         env:'prod',
         badge:{
@@ -2650,7 +2650,7 @@ const globalConfigs = {
         captionPos: 'top',
         subcaption: '~ 4.5% fee ~',
         supportedMethods:['card','bank'],
-        supportedCountries:['GBR','EUR','AUS','BRA','CHN','MEX','CAN','HKG','RUS','ZAF','KOR'],
+        supportedCountries:['GBR','EUR','AUS','BRA','CHN','MEX','CAN','HKG','RUS','ZAF','KOR','MATIC'],
         supportedTokens:['USDC','DAI','ETH'],
         env:'prod',
         envParams:{
@@ -2884,7 +2884,7 @@ const globalConfigs = {
         captionPos: 'top',
         subcaption: '~ 0.25% fee ~',
         supportedMethods:['wallet'],
-        supportedTokens:['WETH','USDC','DAI','USDT','TUSD','SUSD','WBTC','RAI'],
+        supportedTokens:['WETH','USDC','DAI','USDT','TUSD','SUSD','WBTC','RAI','MATIC'],
         web3Subscription:{ // Data for web3 subscription
           enabled: true,
           contractAddress: '0x818e6fecd516ecc3849daf6845e3ec868087b755',
