@@ -1071,6 +1071,8 @@ const globalConfigs = {
       },
       137:{
         name:'Matic',
+        version:'v1',
+        network:'mainnet',
         baseToken:'MATIC',
         explorer:'polygon',
         provider:'polygon',
@@ -1089,6 +1091,8 @@ const globalConfigs = {
       },
       80001:{
         name:'Mumbai',
+        version:'mumbai',
+        network:'testnet',
         baseToken:'MATIC',
         explorer:'polygon',
         provider:'polygon'
@@ -1109,7 +1113,9 @@ const globalConfigs = {
           5: 'https://goerli.infura.io/v3/',
           42: 'https://kovan.infura.io/v3/',
           1: 'https://mainnet.infura.io/v3/',
-          1337: 'https://mainnet.infura.io/v3/'
+          1337: 'https://mainnet.infura.io/v3/',
+          137: 'https://mainnet.infura.io/v3/',
+          80001: 'https://goerli.infura.io/v3/'
         }
       },
       polygon:{
@@ -1118,6 +1124,12 @@ const globalConfigs = {
         baseUrl:{
           137:'https://explorer-mainnet.maticvigil.com',
           80001:'https://explorer-mumbai.maticvigil.com'
+        },
+        networkPairs:{
+          1:137,
+          137:1,
+          5:80001,
+          80001:5
         },
         rpc:{
           1:'https://rpc-mainnet.maticvigil.com/v1/',
@@ -1129,6 +1141,13 @@ const globalConfigs = {
       ens:{
         enabled:true,
         supportedNetworks:[1]
+      },
+      covalent:{
+        enabled:true,
+        endpoints:{
+          137:'https://api.covalenthq.com/v1/137/',
+          80001:'https://api.covalenthq.com/v1/80001/'
+        }
       },
       etherscan:{
         enabled:true, // False for empty txs list (try new wallet)
