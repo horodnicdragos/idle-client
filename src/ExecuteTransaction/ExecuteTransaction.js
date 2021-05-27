@@ -87,6 +87,23 @@ class ExecuteTransaction extends Component {
       }));
     };
 
+    let params = this.props.params;
+    if (typeof this.props.getTransactionParams === 'function'){
+      params = this.props.getTransactionParams();
+    } else if (typeof this.props.getTransactionParamsAsync === 'function'){
+      params = await this.props.getTransactionParamsAsync();
+    }
+
+    if (!params){
+      return false;
+    }
+
+    if (this.props.sendRawTransaction){
+      this.functionsUtil.contractMethodSendWrapper(this.props.contractName,this.props.methodName,params,callback,callbackReceipt,null,true,params);
+    } else {
+      this.functionsUtil.contractMethodSendWrapper(this.props.contractName,this.props.methodName,params,callback,callbackReceipt);
+    }
+    
     this.setState((prevState) => ({
       txStatus:'loading',
       processing: {
