@@ -3369,6 +3369,7 @@ class FunctionsUtil {
             output = await this.getCompUserDistribution(account,govTokenAvailableTokens);
           break;
           case 'stkAAVE':
+          case 'WMATIC':
             output = await this.getStkAaveUserDistribution(account,govTokenAvailableTokens);
           break;
           case 'IDLE':
@@ -3424,6 +3425,7 @@ class FunctionsUtil {
             output = await this.getCompDistribution(selectedTokenConfig);
           break;
           case 'stkAAVE':
+          case 'WMATIC':
             output = await this.getStkAaveDistribution(selectedTokenConfig);
           break;
           case 'IDLE':
@@ -3457,7 +3459,7 @@ class FunctionsUtil {
       case 'apy':
         const tokenApys = await this.getTokenAprs(tokenConfig,false,addGovTokens);
 
-        // console.log('apr',token,tokenApys.avgApr ? tokenApys.avgApr.toFixed() : null,tokenApys.avgApy ? tokenApys.avgApy.toFixed() : null);
+        console.log('apr',token,tokenApys.avgApr ? tokenApys.avgApr.toFixed() : null,tokenApys.avgApy ? tokenApys.avgApy.toFixed() : null);
 
         output = this.BNify(0);
 
@@ -4912,12 +4914,14 @@ class FunctionsUtil {
     const cachedDataKey = `getStkAaveDistribution_${tokenConfig.idle.token}_${aTokenIdleSupply}_${annualize}`;
     const cachedData = this.getCachedDataWithLocalStorage(cachedDataKey);
     if (cachedData && !this.BNify(cachedData).isNaN()){
-      return this.BNify(cachedData);
+      // return this.BNify(cachedData);
     }
 
     let aaveDistribution = this.BNify(0);
     const stkAAVETokenConfig = this.getGlobalConfig(['govTokens','stkAAVE']);
     const aTokenConfig = tokenConfig.protocols.find( p => p.name === stkAAVETokenConfig.protocol );
+
+    console.log('getStkAaveDistribution_1',tokenConfig.idle.token,aTokenConfig.token);
 
     if (!aTokenConfig || stkAAVETokenConfig.disabledTokens.includes(tokenConfig.idle.token)){
       return aaveDistribution;
@@ -4925,13 +4929,13 @@ class FunctionsUtil {
 
     const aaveIncentivesController_address = await this.genericContractCall(aTokenConfig.token,'getIncentivesController');
 
-    // console.log('getStkAaveDistribution',tokenConfig.idle.token,aTokenConfig.token,aaveIncentivesController_address);
+    console.log('getStkAaveDistribution_2',aaveIncentivesController_address);
 
     if (!aaveIncentivesController_address){
       return aaveDistribution;
     }
 
-    const IAaveIncentivesController_name = `IAaveIncentivesController_${aTokenConfig.token}`;
+    const IAaveIncentivesController_name = `IAaveIncentivesController_${aaveIncentivesController_address}`;
     await this.props.initContract(IAaveIncentivesController_name,aaveIncentivesController_address,stkAAVETokenConfig.abi);
 
     let [
@@ -4943,6 +4947,8 @@ class FunctionsUtil {
       this.getTokenAllocation(tokenConfig,false,false),
       this.genericContractCall(IAaveIncentivesController_name,'getAssetData',[aTokenConfig.address]),
     ]);
+
+    console.log('getStkAaveDistribution_3',IAaveIncentivesController_name,aTokenTotalSupply,assetData,tokenAllocation);
 
     if (assetData && tokenAllocation){
 
@@ -4965,7 +4971,7 @@ class FunctionsUtil {
           aaveDistribution = aaveDistribution.div(1e18).times(secondsPerYear);
         }
 
-        // console.log('getStkAaveDistribution',tokenConfig.idle.token,aTokenIdleSupply.toFixed(),aTokenTotalSupply.toFixed(),aavePoolShare.toFixed(),aaveSpeed.toFixed(),aaveDistribution.toFixed());
+        console.log('getStkAaveDistribution_4',tokenConfig.idle.token,aTokenIdleSupply.toFixed(),aTokenTotalSupply.toFixed(),aavePoolShare.toFixed(),aaveSpeed.toFixed(),aaveDistribution.toFixed());
 
         if (!this.BNify(aaveDistribution).isNaN()){
           return this.setCachedDataWithLocalStorage(cachedDataKey,aaveDistribution);
@@ -5380,10 +5386,11 @@ class FunctionsUtil {
   }
   getTokenGovTokens = (tokenConfig) => {
     const output = {};
+    const currentNetworkId = this.getCurrentNetworkId();
     const govTokens = this.getGlobalConfig(['govTokens']);
     Object.keys(govTokens).forEach( govToken => {
       const govTokenConfig = govTokens[govToken];
-      if (!govTokenConfig.enabled || govTokenConfig.disabledTokens.includes(tokenConfig.idle.token)){
+      if (!govTokenConfig.enabled || govTokenConfig.disabledTokens.includes(tokenConfig.idle.token) || (govTokenConfig.availableNetworks && !govTokenConfig.availableNetworks.includes(currentNetworkId))){
         return;
       }
       if (govTokenConfig.protocol === 'idle'){
@@ -5479,6 +5486,7 @@ class FunctionsUtil {
           govSpeed = await this.getCompDistribution(tokenConfig,null,false);
         break;
         case 'stkAAVE':
+        case 'WMATIC':
           govSpeed = await this.getStkAaveDistribution(tokenConfig,null,false);
         break;
         case 'IDLE':
@@ -5521,6 +5529,7 @@ class FunctionsUtil {
 
       switch (govToken){
         case 'stkAAVE':
+        case 'WMATIC':
           switch (govTokenConfig.aprTooltipMode){
             default:
             case 'apr':
@@ -6358,6 +6367,7 @@ class FunctionsUtil {
                 govTokenAPR = await this.getCompAPR(tokenConfig.token,tokenConfig);
               break;
               case 'stkAAVE':
+              case 'WMATIC':
                 govTokenAPR = await this.getStkAaveApr(tokenConfig.token,tokenConfig);
               break;
               default:
