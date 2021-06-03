@@ -86,9 +86,16 @@ class Notifications extends Component {
     const isMainnet = requiredNetwork === 1;
 
     // Get stored lastOpenTimestamp for notifications
+    const currentNetwork = this.functionsUtil.getCurrentNetwork();
+    const governanceConfig = this.functionsUtil.getGlobalConfig(['governance']);
+    const batchDepositConfig = this.functionsUtil.getGlobalConfig(['tools','batchDeposit']);
     const polygonBridgeConfig = this.functionsUtil.getGlobalConfig(['tools','polygonBridge']);
     const notificationsParams = this.functionsUtil.getStoredItem('notificationsParams',true,{});
     const lastOpenTimestamp = notificationsParams.lastOpenTimestamp || null;
+
+    const polygonBridgeEnabled = polygonBridgeConfig.enabled && polygonBridgeConfig.availableNetworks.includes(currentNetwork.id);
+    const governanceEnabled = governanceConfig.enabled && governanceConfig.availableNetworks.includes(currentNetwork.id) && isMainnet && !this.props.isMobile;
+    const batchedDepositsEnabled = batchDepositConfig.enabled && batchDepositConfig.availableNetworks.includes(currentNetwork.id) && isMainnet && !this.props.isMobile;
 
     // Get active snapshot proposals
     const [
@@ -100,9 +107,9 @@ class Notifications extends Component {
     ] = await Promise.all([
       this.functionsUtil.getSubstackLatestFeed(),
       this.functionsUtil.getSnapshotProposals(true),
-      (isMainnet && !this.props.isMobile) ? this.governanceUtil.getProposals(null,'Active') : [],
-      polygonBridgeConfig.enabled ? this.functionsUtil.getPolygonBridgeTxs(this.props.account) : null,
-      (isMainnet && !this.props.isMobile) ? this.functionsUtil.getBatchedDeposits(this.props.account,'executed') : []
+      governanceEnabled ? this.governanceUtil.getProposals(null,'Active') : null,
+      polygonBridgeEnabled ? this.functionsUtil.getPolygonBridgeTxs(this.props.account) : null,
+      batchedDepositsEnabled ? this.functionsUtil.getBatchedDeposits(this.props.account,'executed') : null
     ]);
 
     let notifications = this.functionsUtil.getGlobalConfig(['notifications']).filter( n => (n.enabled && n.start<=currTime && n.end>currTime) );
@@ -164,7 +171,6 @@ class Notifications extends Component {
 
     // Add Executed Batch Deposits
     if (batchedDeposits){
-      const batchDepositConfig = this.functionsUtil.getGlobalConfig(['tools','batchDeposit']);
       const batchDepositBaseUrl = this.functionsUtil.getGlobalConfig(['dashboard','baseRoute'])+`/tools/${batchDepositConfig.route}/`;
       Object.keys(batchedDeposits).forEach( batchToken => {
         const batchInfo = batchedDeposits[batchToken];
