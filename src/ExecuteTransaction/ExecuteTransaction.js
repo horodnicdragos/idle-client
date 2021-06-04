@@ -87,6 +87,14 @@ class ExecuteTransaction extends Component {
       }));
     };
 
+    this.setState((prevState) => ({
+      txStatus:'loading',
+      processing: {
+        ...prevState.processing,
+        loading:true
+      }
+    }));
+
     let params = this.props.params;
     if (typeof this.props.getTransactionParams === 'function'){
       params = this.props.getTransactionParams();
@@ -95,6 +103,13 @@ class ExecuteTransaction extends Component {
     }
 
     if (!params){
+      this.setState((prevState) => ({
+        txStatus:null,
+        processing: {
+          ...prevState.processing,
+          loading:false
+        }
+      }));
       return false;
     }
 
