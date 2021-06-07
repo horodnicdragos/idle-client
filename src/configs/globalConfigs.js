@@ -1430,31 +1430,6 @@ const globalConfigs = {
         }
       }
     },
-    ethWrapper:{
-      enabled:true,
-      label:'ETH Wrapper',
-      route:'eth-wrapper',
-      availableNetworks:[1,42],
-      subComponent:TokenWrapper,
-      image:'images/tokens/WETH.svg',
-      desc:'Wrap your ETH and get WETH. Unwrap your WETH and get back ETH.',
-      props:{
-        startContract:{
-          name:'ETH',
-          token:'ETH',
-          decimals:18,
-          wrapMethod:'deposit',
-        },
-        destContract:{
-          abi:WETH,
-          name:'WETH',
-          decimals:18,
-          token:'WETH',
-          unwrapMethod:'withdraw',
-          address:'0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-        },
-      }
-    },
     stake:{
       enabled:true,
       icon:'Layers',
@@ -1536,6 +1511,7 @@ const globalConfigs = {
       enabled:true,
       label:'ETH Wrapper',
       route:'eth-wrapper',
+      availableNetworks:[1,42],
       subComponent:TokenWrapper,
       image:'images/tokens/WETH.svg',
       desc:'Wrap your ETH and get WETH. Unwrap your WETH and get back ETH.',
@@ -2269,6 +2245,7 @@ const globalConfigs = {
       enabled:true,
       route:'add-funds',
       label:'Add Funds',
+      availableNetworks:[1],
       icon:'AddCircleOutline',
       desc:'Buy tokens with your Bank account, Credit card or Ethereum Wallet',
       subComponent:BuyModal,
