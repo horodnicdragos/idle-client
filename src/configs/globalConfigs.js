@@ -1233,7 +1233,8 @@ const globalConfigs = {
         keys:[
           env.REACT_APP_ETHERSCAN_KEY,
           env.REACT_APP_ETHERSCAN_KEY2,
-          env.REACT_APP_ETHERSCAN_KEY3
+          env.REACT_APP_ETHERSCAN_KEY3,
+          env.REACT_APP_ETHERSCAN_KEY4
         ],
         endpoints:{
           1: 'https://api.etherscan.io/api',
