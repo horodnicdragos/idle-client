@@ -1397,7 +1397,7 @@ class DepositRedeem extends Component {
 
     const ethWrapperInfo = this.functionsUtil.getGlobalConfig(['tools','ethWrapper']);
     const ETHWrapperComponent = ethWrapperInfo.subComponent;
-    const showETHWrapper = this.props.selectedToken === 'WETH' && ethWrapperInfo.enabled && !this.props.isMigrationTool && this.state.action === 'deposit';
+    const showETHWrapper = this.props.selectedToken === 'WETH' && ethWrapperInfo.enabled && ethWrapperInfo.availableNetworks.includes(currentNetwork.id) && !this.props.isMigrationTool && this.state.action === 'deposit';
 
     const polygonBridgeInfo = this.functionsUtil.getGlobalConfig(['tools','polygonBridge']);
     // const PolygonBridgeComponent = polygonBridgeInfo.subComponent;
@@ -2484,7 +2484,7 @@ class DepositRedeem extends Component {
                                   hoverColor={'primary'}
                                   href={`/#/dashboard/tools/${polygonBridgeInfo.route}/${this.props.selectedToken}`}
                                 >
-                                  Use the {polygonBridgeInfo.label} to deposit your {this.props.selectedToken}
+                                  Use the {polygonBridgeInfo.label} to transfer your {this.props.selectedToken}
                                 </Link>
                                 <Icon
                                   ml={1}
@@ -3102,7 +3102,7 @@ class DepositRedeem extends Component {
                     color={'cellText'}
                     textAlign={'center'}
                   >
-                    <strong>You don't have enough {buyToken} in your wallet!</strong><br />Use the {polygonBridgeInfo.label} to deposit your {buyToken} in Polygon.
+                    <strong>You don't have enough {buyToken} in your wallet!</strong><br />Use the {polygonBridgeInfo.label} to transfer your {buyToken} in Polygon.
                   </Text>
                   <RoundButton
                     buttonProps={{
