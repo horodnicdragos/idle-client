@@ -145,7 +145,7 @@ class App extends Component {
             expirationDate
           }
         };
-        // console.log('STORED CACHE - INSERT KEY',key,data);
+        // console.log('CACHE DATA',key,Date.now());
         this.functionsUtil.setLocalStorage('cachedData',storedCachedData,true);
       }
 

@@ -61,7 +61,7 @@ class NetworkIndicator extends Component {
             */
           }
           <Image
-            mr={1}
+            mr={2}
             width={'1.2em'}
             height={'1.2em'}
             display={'inline-flex'}

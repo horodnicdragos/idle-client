@@ -1,7 +1,7 @@
 import Staking from '../Staking/Staking';
 import DAI from '../abis/tokens/DAI.json';
 import IDLE from '../contracts/IDLE.json';
-// import USDC from '../abis/tokens/USDC.json';
+import USDC from '../abis/tokens/USDC.json';
 import WETH from '../abis/tokens/WETH.json';
 import COMP from '../abis/compound/COMP.json';
 import aToken from '../abis/aave/AToken.json';
@@ -68,7 +68,6 @@ import SushiLiquidityPool from '../abis/sushiswap/SushiLiquidityPool.json';
 import StakingFeeDistributor from '../contracts/StakingFeeDistributor.json';
 import BalancerExchangeProxy from '../abis/balancer/BalancerExchangeProxy.json';
 import IdleConverterPersonalSignV4 from '../contracts/IdleConverterPersonalSignV4.json';
-import MinimalInitializableProxyFactory from '../contracts/MinimalInitializableProxyFactory.json';
 
 const env = process.env;
 
@@ -888,6 +887,20 @@ const globalConfigs = {
         },
         address:'0x03ab458634910aad20ef5f1c8ee96f1d6ac54919',
       },
+      WMATIC:{
+        decimals:18,
+        enabled:true,
+        color:{
+          hex:'#2891f8',
+          rgb:[40, 145, 248],
+          hsl:['210', '94%', '56%']
+        },
+        startTimestamp:'2021-05-25',
+        chart:{
+          labelTextColorModifiers:['darker', 4]
+        },
+        address:'0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0',
+      },
       'idleDAI+idleUSDC+idleUSDT':{
         decimals:18,
         enabled:false,
@@ -1176,7 +1189,7 @@ const globalConfigs = {
         // key:env.REACT_APP_POLYGON_KEY,
         key:env.REACT_APP_INFURA_KEY,
         baseUrl:{
-          137:'https://explorer-mainnet.maticvigil.com',
+          137:'https://polygonscan.com',
           80001:'https://explorer-mumbai.maticvigil.com'
         },
         networkPairs:{
@@ -1217,6 +1230,11 @@ const globalConfigs = {
       etherscan:{
         enabled:true, // False for empty txs list (try new wallet)
         key:env.REACT_APP_ETHERSCAN_KEY,
+        keys:[
+          env.REACT_APP_ETHERSCAN_KEY,
+          env.REACT_APP_ETHERSCAN_KEY2,
+          env.REACT_APP_ETHERSCAN_KEY3
+        ],
         endpoints:{
           1: 'https://api.etherscan.io/api',
           1337: 'https://api.etherscan.io/api',
@@ -1332,6 +1350,10 @@ const globalConfigs = {
             name:'DepositManager',
             address:'0x401f6c983ea34274ec46f84d70b31c151321188b'
           },
+          RootChainManager:{
+            name:'RootChainManager',
+            address:'0xA0c68C638235ee32657e8f720a23ceC1bFc77C77' // Mainnet
+          },
           StateSender:{
             name:'StateSender',
             address:'0x28e4F3a7f651294B9564800b2D01f35189A5bFbE'
@@ -1374,16 +1396,35 @@ const globalConfigs = {
               address:'0x0000000000000000000000000000000000001010' // Matic
             }
           },
-          /*
-          ETH:{
-            name:'ETH',
+          WETH:{
+            name:'WETH',
             token:'ETH',
             decimals:18,
             enabled:true,
+            bridgeType:'pos',
             childToken:{
               abi:ChildERC20,
-              name:'MaticWETH',
-              address:'0x8cc8538d60901d19692F5ba22684732Bc28F54A3' // Matic
+              name:'maticWETH',
+              address:'0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619' // Matic
+            }
+          },
+          /*
+          WETH:{
+            name:'WETH',
+            token:'WETH',
+            decimals:18,
+            enabled:true,
+            sendValue:false,
+            bridgeType:'pos',
+            rootToken:{
+              abi:ERC20,
+              name:'WETH',
+              address:'0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // Mainnet
+            },
+            childToken:{
+              abi:ChildERC20,
+              name:'childWETH',
+              address:'0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619' // Matic
             }
           },
           */
@@ -1407,26 +1448,25 @@ const globalConfigs = {
               address:'0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063' // Matic
             }
           },
-          /*
           USDC:{
             decimals:6,
             name:'USDC',
             token:'USDC',
             enabled:true,
+            bridgeType:'pos',
             rootToken:{
               abi:USDC,
               name:'USDC',
-              address:'0x98339D8C260052B7ad81c28c16C0b98420f2B46a' // Goerli
-              // address:'0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // Mainnet
+              // address:'0x98339D8C260052B7ad81c28c16C0b98420f2B46a' // Goerli
+              address:'0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // Mainnet
             },
             childToken:{
               abi:ChildERC20,
               name:'childUSDC',
-              address:'0x6D4dd09982853F08d9966aC3cA4Eb5885F16f2b2' // Mubai
-              // address:'0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174' // Matic
+              // address:'0x6D4dd09982853F08d9966aC3cA4Eb5885F16f2b2' // Mubai
+              address:'0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174' // Matic
             }
           }
-          */
         }
       }
     },
