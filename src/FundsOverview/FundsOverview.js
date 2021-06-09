@@ -208,6 +208,10 @@ class FundsOverview extends Component {
 
   render() {
 
+    const currentNetwork = this.functionsUtil.getCurrentNetwork();
+    const showScore = currentNetwork.provider === 'infura';
+    const colWidth = showScore ? 1/6 : 1/5;
+
     return (
       <Flex
         width={1}
@@ -316,7 +320,7 @@ class FundsOverview extends Component {
           >
             <Flex
               mb={[2,0]}
-              width={[1,1/6]}
+              width={[1,colWidth]}
               alignItems={'center'}
               flexDirection={'column'}
               justifyContent={'flex-start'}
@@ -348,7 +352,7 @@ class FundsOverview extends Component {
             </Flex>
             <Flex
               mb={[2,0]}
-              width={[1,1/6]}
+              width={[1,colWidth]}
               alignItems={'center'}
               flexDirection={'column'}
               justifyContent={'flex-start'}
@@ -402,7 +406,7 @@ class FundsOverview extends Component {
             </Flex>
             <Flex
               mb={[2,0]}
-              width={[1,1/6]}
+              width={[1,colWidth]}
               alignItems={'center'}
               flexDirection={'column'}
               justifyContent={'flex-start'}
@@ -491,7 +495,7 @@ class FundsOverview extends Component {
             </Flex>
             <Flex
               mb={[2,0]}
-              width={[1,1/6]}
+              width={[1,colWidth]}
               alignItems={'center'}
               flexDirection={'column'}
               justifyContent={'flex-start'}
@@ -525,7 +529,7 @@ class FundsOverview extends Component {
             </Flex>
             <Flex
               mb={[2,0]}
-              width={[1,1/6]}
+              width={[1,colWidth]}
               alignItems={'center'}
               flexDirection={'column'}
               justifyContent={'flex-start'}
@@ -629,37 +633,41 @@ class FundsOverview extends Component {
                 */
               }
             </Flex>
-            <Flex
-              mb={[2,0]}
-              width={[1,1/6]}
-              alignItems={'center'}
-              flexDirection={'column'}
-              justifyContent={'flex-start'}
-            >
-              <Title
-                mb={2}
-                fontSize={[3,4]}
-                component={Heading.h3}
-              >
-                Risk Score
-              </Title>
-              <AssetField
-                {...this.props}
-                token={this.props.selectedToken}
-                fieldInfo={{
-                  name:'score',
-                  props:{
-                    decimals:1,
-                    fontWeight:300,
-                    fontSize:['1.8em','1.9em'],
-                    color:this.props.theme.colors.counter,
-                    flexProps:{
-                      justifyContent:'center'
-                    }
-                  }
-                }}
-              />
-            </Flex>
+            {
+              showScore && (
+                <Flex
+                  mb={[2,0]}
+                  width={[1,colWidth]}
+                  alignItems={'center'}
+                  flexDirection={'column'}
+                  justifyContent={'flex-start'}
+                >
+                  <Title
+                    mb={2}
+                    fontSize={[3,4]}
+                    component={Heading.h3}
+                  >
+                    Risk Score
+                  </Title>
+                  <AssetField
+                    {...this.props}
+                    token={this.props.selectedToken}
+                    fieldInfo={{
+                      name:'score',
+                      props:{
+                        decimals:1,
+                        fontWeight:300,
+                        fontSize:['1.8em','1.9em'],
+                        color:this.props.theme.colors.counter,
+                        flexProps:{
+                          justifyContent:'center'
+                        }
+                      }
+                    }}
+                  />
+                </Flex>
+              )
+            }
           </Flex>
         </DashboardCard>
       </Flex>
