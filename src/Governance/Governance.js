@@ -283,7 +283,7 @@ class Dashboard extends Component {
   }
 
   checkEnabled(){
-    const currentNetwork = this.functionsUtil.getCurrentNetwork();
+    const currentNetwork = this.functionsUtil.getRequiredNetwork();
     const governanceConfig = this.functionsUtil.getGlobalConfig(['governance']);
     const governanceEnabled = governanceConfig.enabled && governanceConfig.availableNetworks.includes(currentNetwork.id);
     console.log('governanceEnabled',currentNetwork,governanceEnabled);

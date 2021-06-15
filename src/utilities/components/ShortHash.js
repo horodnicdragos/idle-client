@@ -26,6 +26,10 @@ class ShortHash extends Component {
 
   async componentDidUpdate(prevProps,prevState){
     this.loadUtils();
+    const hashChanged = prevProps.hash !== this.props.hash;
+    if (hashChanged){
+      this.loadData();
+    }
   }
 
   async loadData(){

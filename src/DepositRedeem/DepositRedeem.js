@@ -1336,7 +1336,7 @@ class DepositRedeem extends Component {
       return null;
     }
 
-    const currentNetwork = this.functionsUtil.getCurrentNetwork();
+    const currentNetwork = this.functionsUtil.getRequiredNetwork();
 
     const viewOnly = this.props.connectorName === 'custom';
 
@@ -1390,7 +1390,7 @@ class DepositRedeem extends Component {
     const showAdvancedDepositOptions = showDepositCurve || showRebalanceOption;
 
     const batchDepositInfo = this.functionsUtil.getGlobalConfig(['tools','batchDeposit']);
-    const batchDepositEnabled = batchDepositInfo.enabled && typeof batchDepositInfo.props.availableTokens[this.props.tokenConfig.idle.token] !== 'undefined' && batchDepositInfo.availableNetworks.includes(this.functionsUtil.getCurrentNetworkId());
+    const batchDepositEnabled = batchDepositInfo.enabled && typeof batchDepositInfo.props.availableTokens[this.props.tokenConfig.idle.token] !== 'undefined' && batchDepositInfo.availableNetworks.includes(currentNetwork.id);
     const batchDepositDepositEnabled = batchDepositInfo.depositEnabled;
 
     const showBatchDeposit = !useMetaTx && batchDepositEnabled && batchDepositDepositEnabled && !this.props.isMigrationTool && this.state.action === 'deposit';

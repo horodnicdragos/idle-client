@@ -9,7 +9,7 @@ import FunctionsUtil from './FunctionsUtil';
 import MaticJs from '@maticnetwork/maticjs';
 import globalConfigs from '../configs/globalConfigs';
 import ConnectionModalUtil from "./ConnectionModalsUtil";
-import detectEthereumProvider from '@metamask/detect-provider';
+// import detectEthereumProvider from '@metamask/detect-provider';
 import ConnectionErrorModal from './components/ConnectionErrorModal';
 import TransactionErrorModal from './components/TransactionErrorModal';
 
@@ -22,6 +22,7 @@ const RimbleTransactionContext = React.createContext({
   simpleID: {},
   contracts: [],
   web3Infura: {},
+  currentWeb3: {},
   web3Polygon: {},
   tokenConfig: {},
   transactions: {},
@@ -45,6 +46,7 @@ const RimbleTransactionContext = React.createContext({
     required: {},
     checkNetwork: () => {},
     isCorrectNetwork: null,
+    isSupportedNetwork: null,
   },
   networkInitialized:false,
   accountInizialized: false,
@@ -127,30 +129,39 @@ class RimbleTransaction extends React.Component {
     this.componentUnmounted = true;
   }
 
-  componentWillMount(){
+  async componentWillMount(){
     this.loadUtils();
-    this.checkNetwork();
+    await this.checkNetwork();
 
     // detect Network account change
     if (window.ethereum){
       window.ethereum.on('networkChanged', async (networkId) => {
-        this.functionsUtil.removeStoredItem('cachedRequests');
-        this.functionsUtil.removeStoredItem('cachedRequests_polygon');
-        this.functionsUtil.removeStoredItem('transactions');
-        await this.props.clearCachedData(() => {
-          this.checkNetwork();
-        });
+        this.handleNetworkChanged();
+        // window.location.reload();
       });
     }
 
     window.initWeb3 = this.initWeb3;
   }
 
+  handleNetworkChanged = async () => {
+    this.functionsUtil.removeStoredItem('cachedRequests');
+    this.functionsUtil.removeStoredItem('cachedRequests_polygon');
+    this.functionsUtil.removeStoredItem('transactions');
+    await this.props.clearCachedData(() => {
+      this.setState({
+        networkInitialized:false
+      },() => {
+        this.checkNetwork();
+      });
+    });
+  }
+
   componentDidMount = async () => {
-    this.initSimpleID();
+    // this.initSimpleID();
 
     // this.functionsUtil.customLog('RimbleWeb3 componentDidMount');
-    this.initWeb3();
+    // this.initWeb3();
 
     // TEST - Manually triggers transaction error
     // this.openTransactionErrorModal(null,'Your Ledger device is Ineligible');
@@ -245,9 +256,20 @@ class RimbleTransaction extends React.Component {
       await this.initializeContracts();
     }
 
-    const networkChanged = JSON.stringify(prevState.network) !== JSON.stringify(this.state.network) && this.state.network.current.id;
-    // console.log('networkChanged',JSON.stringify(prevState.network),JSON.stringify(this.state.network),networkChanged);
-    if (networkChanged){
+    const selectedNetworkChanged = prevProps.config.requiredNetwork !== this.props.config.requiredNetwork;
+    if (selectedNetworkChanged){
+      // console.log('selectedNetworkChanged',JSON.stringify(prevProps.config.requiredNetwork),this.props.config.requiredNetwork);
+      this.handleNetworkChanged();
+    }
+
+    const currentNetworkChanged = this.state.networkInitialized && prevState.network.current.id !== this.state.network.current.id;
+    if (currentNetworkChanged){
+      this.initWeb3();
+    }
+
+    const requiredNetworkChanged = prevState.network.required.id !== this.state.network.required.id;
+    if (requiredNetworkChanged){
+      // console.log('requiredNetworkChanged',this.state.networkInitialized,JSON.stringify(prevState.network),JSON.stringify(this.state.network));
       this.setState({
         contracts:[],
         contractsInitialized:false
@@ -260,29 +282,44 @@ class RimbleTransaction extends React.Component {
     }
   }
 
+  initCurrentWeb3 = async () => {
+
+  }
+
   // Initialize a web3 provider
   initWeb3 = async (connectorName=null) => {
 
     // Detect ethereum provider
-    const metamaskProvider = await detectEthereumProvider();
-    if (metamaskProvider && (!window.ethereum || window.ethereum !== metamaskProvider)){
-      window.ethereum = metamaskProvider;
+    // const metamaskProvider = await detectEthereumProvider();
+    // if (metamaskProvider && (!window.ethereum || window.ethereum !== metamaskProvider)){
+    //   window.ethereum = metamaskProvider;
+    // }
+    if (!this.state.networkInitialized){
+      return false;
     }
 
     const context = this.props.context;
-    const networkId = this.state.network.current.id || this.state.network.required.id;
+    const networkId = this.state.network.required.id;
+
+    // if (!networkId){
+    //   return false;
+    // }
+
     const networkConfig = this.functionsUtil.getGlobalConfig(['network','availableNetworks',networkId]);
     const provider = networkConfig ? networkConfig.provider : 'infura';
     const web3RpcKey = this.functionsUtil.getGlobalConfig(['network','providers',provider,'key']);
     const web3Rpc = this.functionsUtil.getGlobalConfig(['network','providers',provider,'rpc',networkId])+web3RpcKey;
 
-    // console.log('initWeb3',this.state.network.current.id,this.state.network.required.id,networkId);
+    const useWeb3Provider = this.state.networkInitialized && this.state.network.isCorrectNetwork;
+
+    // console.log('initWeb3',this.state.network.current.id,networkId,provider,web3Rpc,useWeb3Provider);
 
     const web3InfuraRpc = this.functionsUtil.getGlobalConfig(['network','providers','infura','rpc',networkId])+this.functionsUtil.getGlobalConfig(['network','providers','infura','key']);
 
     const web3Infura = new Web3(new Web3.providers.HttpProvider(web3InfuraRpc));
 
-    let web3 = context.library;
+    let currentWeb3 = context.library;
+    let web3 = useWeb3Provider ? context.library : null;
 
     // 0x Instant Wallet Provider Injection
     if (!window.RimbleWeb3_context || context.connectorName !== window.RimbleWeb3_context.connectorName){
@@ -306,12 +343,13 @@ class RimbleTransaction extends React.Component {
         context.connector.disable();
       }
       web3 = null;
+      currentWeb3 = null;
       setConnectorName = null;
     }
 
     const connectorNameChanged = (context.connectorName && context.connectorName !== connectorName) || (connectorName !== 'Infura' && connectorName !== setConnectorName);
 
-    // this.functionsUtil.customLog('initWeb3',context.active,connectorNameChanged,context.connectorName,connectorName,setConnectorName);
+    // console.log('context',context.active,connectorNameChanged,context.connectorName,connectorName,setConnectorName);
 
     if (!context.active || connectorNameChanged) {
       // Select preferred web3 provider
@@ -320,6 +358,7 @@ class RimbleTransaction extends React.Component {
         setConnectorName = connectorName;
         await context.setConnector(connectorName);
         // await context.setFirstValidConnector([connectorName, 'Infura']);
+        // console.log('context',context.active,connectorNameChanged,context.connectorName,connectorName,setConnectorName);
         return web3;
       }
       /*
@@ -379,7 +418,7 @@ class RimbleTransaction extends React.Component {
     }
     */
 
-    let web3Host = null;
+    let web3Host = web3Rpc;
     let web3Provider = null;
 
     if (!web3) { // safety web3 implementation
@@ -391,7 +430,6 @@ class RimbleTransaction extends React.Component {
         web3Provider = window.web3;
       } else {
         this.functionsUtil.customLog("Non-Ethereum browser detected. Using Infura fallback.");
-        web3Host = web3Rpc;
       }
     } else {
       web3Provider = web3.currentProvider;
@@ -410,14 +448,14 @@ class RimbleTransaction extends React.Component {
     }
 
     // Injected web3 provider
-    if (web3Provider){
+    if (web3Provider && useWeb3Provider){
       web3 = new Web3(web3Provider);
     // Infura
     } else if (web3Host) {
       web3 = new Web3(new Web3.providers.HttpProvider(web3Host));
-      if (connectorName !== 'Infura'){
-        this.props.setConnector('Infura',null);
-      }
+      // if (this.state.networkInitialized && connectorName !== 'Infura'){
+      //   this.props.setConnector('Infura',null);
+      // }
     }
 
     let web3Polygon = null;
@@ -462,6 +500,24 @@ class RimbleTransaction extends React.Component {
     window.maticPOSClient = maticPOSClient;
     window.maticPlasmaClient = maticPlasmaClient;
 
+    if (window.ethereum) {
+      currentWeb3 = new Web3(window.ethereum);
+    } else if (window.web3) {
+      currentWeb3 = new Web3(window.web3);
+    } else {
+      currentWeb3 = new Web3(new Web3.providers.HttpProvider(web3Host));
+    }
+
+    this.setState({
+      web3Infura,
+      currentWeb3,
+      web3Polygon,
+      maticPOSClient,
+      maticPlasmaClient
+    },() => {
+      // this.checkNetwork();
+    });
+
     const web3Callback = async () => {
 
       window.web3Injected = this.state.web3;
@@ -472,10 +528,15 @@ class RimbleTransaction extends React.Component {
         this.props.setCallbackAfterLogin(null);
       }
 
+      // console.log('web3Callback',context.account,this.state.network.isSupportedNetwork,this.state.contractsInitialized,this.state.networkInitialized);
+
       // After setting the web3 provider, check network
       try {
-        await this.checkNetwork();
-        if (this.state.network.isCorrectNetwork){
+        // if (!this.state.networkInitialized){
+        //   await this.checkNetwork();
+        // }
+
+        if (this.state.network.isSupportedNetwork){
 
           if (!this.state.contractsInitialized){
             await this.initializeContracts();
@@ -550,11 +611,7 @@ class RimbleTransaction extends React.Component {
             const newState = {
               web3,
               biconomy,
-              web3Infura,
-              web3Polygon,
               permitClient,
-              maticPOSClient,
-              maticPlasmaClient,
               erc20ForwarderClient
             };
             // console.log('biconomy',newState);
@@ -569,33 +626,21 @@ class RimbleTransaction extends React.Component {
             if (this.state.biconomy !== false){
               this.setState({
                 web3,
-                web3Infura,
-                web3Polygon,
-                maticPOSClient,
-                biconomy:false,
-                maticPlasmaClient
+                biconomy:false
               }, web3Callback);
             }
           });
         } else {
           this.setState({
             web3,
-            web3Infura,
-            web3Polygon,
-            maticPOSClient,
-            biconomy:false,
-            maticPlasmaClient
+            biconomy:false
           }, web3Callback);
         }
       }
     } else {
       if (web3 !== this.state.web3){
         this.setState({
-          web3,
-          web3Infura,
-          web3Polygon,
-          maticPOSClient,
-          maticPlasmaClient
+          web3
         }, web3Callback);
       } else if (context.account || forceCallback){
         web3Callback();
@@ -678,6 +723,8 @@ class RimbleTransaction extends React.Component {
   }
 
   initAccount = async (account=false) => {
+
+    // console.log('initAccount',account);
     
     const customAddress = this.props.customAddress;
     const walletProvider = this.functionsUtil.getWalletProvider('Infura');
@@ -698,29 +745,22 @@ class RimbleTransaction extends React.Component {
     try {
       if (!account){
         const wallets = await this.state.web3.eth.getAccounts();
-        console.log('wallets',wallets);
+        // console.log('initAccount, wallets',wallets);
         if (wallets && wallets.length){
           account = wallets[0];
         }
       }
 
       if (!account || this.state.account === account){
-        this.setState({
+        return this.setState({
           accountInizialized: true
         });
-        return false;
       }
+
+      // console.log('initAccount 2',walletProvider,account);
 
       // Request account access if needed
       if (account && walletProvider !== 'Infura'){
-
-        if (walletProvider === 'Infura'){
-          this.setState({
-            accountInizialized: true,
-            account:this.props.customAddress
-          });
-          return false;
-        }
 
         // Send address info to SimpleID
         const simpleID = this.initSimpleID();
@@ -763,195 +803,6 @@ class RimbleTransaction extends React.Component {
           eventLabel: walletProvider
         });
 
-        /*
-        // Unsubscribes to all subscriptions
-        if (this.state.web3SocketProvider && typeof this.state.web3SocketProvider.clearSubscriptions === 'function'){
-          this.functionsUtil.customLog('Clear all web3SocketProvider subscriptions');
-          this.state.web3SocketProvider.clearSubscriptions();
-        }
-
-        const networkName = globalConfigs.network.availableNetworks[globalConfigs.network.requiredNetwork].name.toLowerCase();
-        const web3SocketProvider = new Web3(new Web3.providers.WebsocketProvider(`wss://${networkName}.infura.io/ws/v3/${INFURA_KEY}`));
-
-        // Subscribe to logs
-        const addressTopic = '0x00000000000000000000000'+account.toLowerCase().replace('x','');
-
-        // Subscribe for payment methods
-        const paymentProviders = Object.keys(globalConfigs.payments.providers).filter((providerName,i) => { const providerInfo = globalConfigs.payments.providers[providerName]; return providerInfo.enabled && providerInfo.web3Subscription && providerInfo.web3Subscription.enabled  })
-        if (paymentProviders && paymentProviders.length){
-          paymentProviders.forEach((providerName,i) => {
-            const providerInfo = globalConfigs.payments.providers[providerName];
-
-            this.functionsUtil.customLog(`Subscribe to ${providerName} logs`);
-
-            // Subscribe for deposit transactions
-            web3SocketProvider.eth.subscribe('logs', {
-                address: [account,providerInfo.web3Subscription.contractAddress],
-                topics: [null,[addressTopic]]
-            }, function(error, result){
-              
-            })
-            .on("data", async (log) => {
-              this.functionsUtil.customLog(providerName,'logs',log);
-
-              if (log){
-                const txHash = log.transactionHash;
-                const subscribedTransactions = this.state.subscribedTransactions;
-                const walletAddressFound = log.topics.filter((addr,i) => { return addr.toLowerCase().includes(addressTopic); });
-
-                this.functionsUtil.customLog(providerName,txHash,walletAddressFound);
-
-                if (!subscribedTransactions[txHash] && walletAddressFound.length){
-                  const decodedLogs = web3SocketProvider.eth.abi.decodeLog(providerInfo.web3Subscription.decodeLogsData,log.data,log.topics);
-
-                  this.functionsUtil.customLog(providerName,txHash,decodedLogs);
-
-                  if (decodedLogs && decodedLogs._tokenAmount && decodedLogs._tokenAddress && decodedLogs._tokenAddress.toLowerCase() === this.props.tokenConfig.address.toLowerCase()){
-
-                    const receiptCallback = async (tx,decodedLogs) => {
-                      const tokenDecimals = await this.getTokenDecimals();
-                      const tokenAmount = this.functionsUtil.BNify(decodedLogs._tokenAmount);
-                      const tokenAmountFixed = this.functionsUtil.fixTokenDecimals(tokenAmount,tokenDecimals);
-                      const tokenAmountFormatted = parseFloat(tokenAmountFixed.toString()).toFixed(2);
-                      const isProviderTx = tx.from.toLowerCase() === account.toLowerCase() && tx.to.toLowerCase() === providerInfo.web3Subscription.contractAddress.toLowerCase();
-
-                      if (isProviderTx){
-
-                        // Mined
-                        if (tx.blockNumber && tx.status){
-                          // Toast message
-                          window.showToastMessage({
-                            variant:'success',
-                            message:'Deposit completed',
-                            secondaryMessage:`${providerName} sent you ${tokenAmountFormatted} ${this.props.selectedToken}`,
-                          });
-
-                          // Update User Balance
-                          this.getAccountBalance(tokenAmount);
-                        } else {
-                          // Toast message
-                          window.showToastMessage({
-                            variant:'processing',
-                            message:'Deposit pending',
-                            secondaryMessage:`${providerName} is sending ${tokenAmountFormatted} ${this.props.selectedToken}`,
-                          });
-                        }
-                      }
-                    }
-
-                    let checkTransactionReceiptTimeoutID = null;
-
-                    const checkTransactionReceipt = (txHash,decodedLogs) => {
-                      if (checkTransactionReceiptTimeoutID){
-                        window.clearTimeout(checkTransactionReceiptTimeoutID);
-                      }
-                      web3SocketProvider.eth.getTransactionReceipt(txHash,(err,txReceipt)=>{
-                        if (!err){
-                          if (txReceipt){
-                            receiptCallback(txReceipt,decodedLogs);
-                          } else{
-                            checkTransactionReceiptTimeoutID = window.setTimeout(() => { checkTransactionReceipt(txHash,decodedLogs) },3000);
-                          }
-                        }
-                      });
-                    }
-
-                    checkTransactionReceipt(txHash,decodedLogs);
-
-                    subscribedTransactions[txHash] = log;
-                    this.setState({subscribedTransactions});
-                  }
-                }
-              }
-            });
-          })
-        }
-
-        // Subscribe for deposit transactions
-        web3SocketProvider.eth.subscribe('logs', {
-            address: [account,this.props.tokenConfig.address],
-            topics: [null,null,[addressTopic]]
-        }, function(error, result){
-
-        })
-        .on("data", async (log) => {
-          if (log){
-            const txHash = log.transactionHash;
-            const subscribedTransactions = this.state.subscribedTransactions;
-            const walletAddressFound = log.topics.filter((addr,i) => { return addr.toLowerCase().includes(addressTopic); });
-
-            if (!subscribedTransactions[txHash] && walletAddressFound.length){
-              const decodedLogs = web3SocketProvider.eth.abi.decodeLog([
-                {
-                  "internalType": "uint256",
-                  "name": "_tokenAmount",
-                  "type": "uint256"
-                },
-              ],log.data,log.topics);
-
-              if (decodedLogs && decodedLogs._tokenAmount){
-
-                const receiptCallback = async (tx,decodedLogs) => {
-                  const tokenDecimals = await this.getTokenDecimals();
-                  const tokenAmount = this.functionsUtil.BNify(decodedLogs._tokenAmount);
-                  const tokenAmountFixed = this.functionsUtil.fixTokenDecimals(tokenAmount,tokenDecimals);
-                  const tokenAmountFormatted = parseFloat(tokenAmountFixed.toString()).toFixed(2);
-                  const isDepositTokenTx = tx.to.toLowerCase() === this.props.tokenConfig.address.toLowerCase();
-
-                  if (isDepositTokenTx){
-
-                    // Mined
-                    if (tx.blockNumber && tx.status){
-                      // Toast message
-                      window.showToastMessage({
-                        message:'Deposit completed',
-                        secondaryMessage: `${tokenAmountFormatted} ${this.props.selectedToken} has been deposited`,
-                        variant: "success",
-                      });
-
-                      // Update User Balance
-                      this.getAccountBalance(tokenAmount);
-                    } else {
-                      // Toast message
-                      window.showToastMessage({
-                        message:'Deposit pending',
-                        secondaryMessage: `${tokenAmountFormatted} ${this.props.selectedToken} are on the way`,
-                        variant: "processing",
-                      });
-                    }
-                  }
-                }
-
-                let checkTransactionReceiptTimeoutID = null;
-
-                const checkTransactionReceipt = (txHash,decodedLogs) => {
-                  if (checkTransactionReceiptTimeoutID){
-                    window.clearTimeout(checkTransactionReceiptTimeoutID);
-                  }
-                  web3SocketProvider.eth.getTransactionReceipt(txHash,(err,txReceipt)=>{
-                    if (!err){
-                      if (txReceipt){
-                        receiptCallback(txReceipt,decodedLogs);
-                      } else{
-                        checkTransactionReceiptTimeoutID = window.setTimeout(() => { checkTransactionReceipt(txHash,decodedLogs) },3000);
-                      }
-                    }
-                  });
-                }
-
-                checkTransactionReceipt(txHash,decodedLogs);
-
-                subscribedTransactions[txHash] = log;
-                this.setState({subscribedTransactions});
-              }
-            }
-          }
-        })
-        .on("changed", log => {
-          
-        });
-        */
-
         // this.functionsUtil.customLog('initAccount',account);
 
         // Set custom account
@@ -967,6 +818,11 @@ class RimbleTransaction extends React.Component {
         // TODO subscribe for account changes, no polling
         // set a state flag which indicates if the subscribe handler has been
         // called at least once
+      } else if (walletProvider === 'Infura') {
+        return this.setState({
+          accountInizialized: true,
+          account:this.props.currentProvider,
+        });
       }
     } catch (error) {
 
@@ -1070,7 +926,7 @@ class RimbleTransaction extends React.Component {
 
   initializeContracts = async () => {
 
-    const contracts = this.functionsUtil.getGlobalConfig(['contracts',this.state.network.current.id]);
+    const contracts = this.functionsUtil.getGlobalConfig(['contracts',this.state.network.required.id]);
     await this.functionsUtil.asyncForEach(Object.keys(contracts),async (contractName) => {
       const contractInfo = contracts[contractName];
       if (contractInfo.address !== null && contractInfo.abi !== null){
@@ -1241,7 +1097,11 @@ class RimbleTransaction extends React.Component {
         ? this.props.config.requiredNetwork
         : globalConfigs.network.requiredNetwork;
 
-    let networkName = globalConfigs.network.availableNetworks[networkId] ? globalConfigs.network.availableNetworks[networkId].name : 'unknown';
+    // if (!networkId || !globalConfigs.network.availableNetworks[networkId]){
+    //   return null;
+    // }
+
+    let networkName = networkId && globalConfigs.network.availableNetworks[networkId] ? globalConfigs.network.availableNetworks[networkId].name : 'unknown';
 
     return {
       id: networkId,
@@ -1249,14 +1109,12 @@ class RimbleTransaction extends React.Component {
     };
   }
 
-  getNetworkId = async () => {
+  getCurrentNetwork = async (networkId=null) => {
 
-    if (!this.state.web3){
-      return {};
-    }
+    const currentWeb3 = this.functionsUtil.getCurrentWeb3();
 
-    const networkId = await this.state.web3.eth.net.getId();
-    const networkName = this.functionsUtil.getGlobalConfig(['network','availableNetworks',networkId,'name']) || await this.state.web3.eth.net.getNetworkType();
+    networkId = parseInt(networkId) || await currentWeb3.eth.net.getId();
+    const networkName = this.functionsUtil.getGlobalConfig(['network','availableNetworks',networkId,'name']) || await currentWeb3.eth.net.getNetworkType();
 
     return {
       id:networkId,
@@ -1264,31 +1122,21 @@ class RimbleTransaction extends React.Component {
     }
   }
 
-  getNetworkName = async () => {
-    try {
-      return this.state.web3.eth.net.getNetworkType((error, networkName) => {
-        let current = { ...this.state.network.current };
-        current.name = networkName;
-        let network = {...this.state.network};
-        network.current = current;
-        this.setState({ network });
-      });
-    } catch (error) {
-      this.functionsUtil.customLog("Could not get network Name: ", error);
-    }
-  }
-
-  checkNetwork = async () => {
+  checkNetwork = async (networkId=null) => {
     let network = {...this.state.network};
 
     network.required = this.getRequiredNetwork();
-    network.current = await this.getNetworkId();
-    network.isCorrectNetwork = !network.current.id || globalConfigs.network.enabledNetworks.includes(network.current.id);
+    network.current = await this.getCurrentNetwork(networkId);
     const networkInitialized = !!network.current.id;
+    network.isCorrectNetwork = !networkInitialized || network.current.id === network.required.id;
+    network.isSupportedNetwork = !network.current.id || globalConfigs.network.enabledNetworks.includes(network.current.id);
 
+    const currentNetworkChanged = network.current.id && network.current.id !== this.state.network.current.id;
+    const requiredNetworkChanged = network.required.id && network.required.id !== this.state.network.required.id;
+    
+    // console.log('checkNetwork',this.state.networkInitialized,currentNetworkChanged,requiredNetworkChanged,network,this.state.network);
 
-    if (!this.state.network.current.id || network.current.id !== this.state.network.current.id || !this.state.networkInitialized){
-      // console.log('checkNetwork',network);
+    if (!this.state.network.current.id || currentNetworkChanged || requiredNetworkChanged || !this.state.networkInitialized){
       this.setState({
         network,
         networkInitialized
@@ -1490,7 +1338,7 @@ class RimbleTransaction extends React.Component {
       };
 
       const errorCallback = error => {
-        console.log('Tx error',error);
+        // console.log('Tx error',error);
         
         const isDeniedTx = error && error.message && typeof error.message.includes === 'function' ? error.message.includes('User denied transaction signature') : false;
         
@@ -1858,6 +1706,7 @@ class RimbleTransaction extends React.Component {
     transactions: {},
     web3Polygon:null,
     CrispClient: null,
+    currentWeb3: null,
     permitClient:null,
     tokenDecimals:null,
     maticPOSClient:null,

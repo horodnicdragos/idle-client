@@ -38,6 +38,12 @@ class MenuAccount extends Component {
 
   async componentDidUpdate(prevProps,prevState){
     this.loadUtils();
+
+    const requiredNetworkChanged = JSON.stringify(prevProps.network.required) !== JSON.stringify(this.props.network.required);
+    if (requiredNetworkChanged){
+      this.loadIdleTokenBalance();
+    }
+
     const accountChanged = prevProps.account !== this.props.account;
     if (accountChanged){
       this.setState({
@@ -49,9 +55,18 @@ class MenuAccount extends Component {
   }
 
   async loadIdleTokenBalance(){
-    const idleGovTokenEnabled = this.functionsUtil.getGlobalConfig(['govTokens','IDLE','enabled']);
+
+    if (!this.props.account){
+      return false;
+    }
+
+    const currentNetwork = this.functionsUtil.getRequiredNetwork();
+    const idleGovTokenConfig = this.functionsUtil.getGlobalConfig(['govTokens','IDLE']);
+    const idleGovTokenEnabled = idleGovTokenConfig.enabled && idleGovTokenConfig.availableNetworks.includes(currentNetwork.id);
+    let idleTokenBalance = null;
+
     if (idleGovTokenEnabled){
-      let idleTokenBalance = this.functionsUtil.BNify(0);
+      idleTokenBalance = this.functionsUtil.BNify(0);
       const [
         balance,
         unclaimed
@@ -63,12 +78,11 @@ class MenuAccount extends Component {
       if (balance && unclaimed){
         idleTokenBalance = this.functionsUtil.BNify(balance).plus(unclaimed);
       }
-
-      return this.setState({
-        idleTokenBalance
-      });
     }
-    return null;
+
+    return this.setState({
+      idleTokenBalance
+    });
   }
 
   toggleModal = (modalName) => {
@@ -80,7 +94,7 @@ class MenuAccount extends Component {
     const connectorInfo = walletProvider ? this.functionsUtil.getGlobalConfig(['connectors',walletProvider.toLowerCase()]) : null;
     const walletIcon = connectorInfo && connectorInfo.icon ? connectorInfo.icon : walletProvider ? `${walletProvider.toLowerCase()}.svg` : null;
 
-    const currentNetwork = this.functionsUtil.getCurrentNetwork();
+    const currentNetwork = this.functionsUtil.getRequiredNetwork();
     const governanceConfig = this.functionsUtil.getGlobalConfig(['governance']);
     
     const governanceRoute = governanceConfig.baseRoute;
@@ -300,12 +314,25 @@ class MenuAccount extends Component {
       ) : (
         <Flex
           width={1}
-          justifyContent={'flex-start'}
+          justifyContent={['space-between','flex-start']}
         >
+          <NetworkIndicator
+            innerProps={{
+              px:1,
+              py:0,
+              width:['100%','auto'],
+              height:['45px','54px']
+            }}
+            {...this.props}
+          />
           <CardIconButton
             icon={'Power'}
             {...this.props}
             text={'Connect'}
+            cardProps={{
+              ml:[0,2],
+              width:['49%','auto'],
+            }}
             handleClick={this.props.connectAndValidateAccount}
           />
         </Flex>

@@ -36,7 +36,9 @@ class ConnectionErrorModal extends React.Component {
     e.preventDefault();
     // Disconnect to Infura only if the wallet is not logged
     if (!this.props.account){
-      await this.props.context.setFirstValidConnector(['Infura']);
+      // await this.props.context.setFirstValidConnector(['Infura']);
+      // this.props.context.setConnector('Infura');
+      this.props.context.unsetConnector();
       this.props.setConnector('Infura',null);
     }
     this.props.modals.methods.closeConnectionErrorModal();

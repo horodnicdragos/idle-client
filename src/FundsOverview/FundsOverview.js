@@ -208,7 +208,7 @@ class FundsOverview extends Component {
 
   render() {
 
-    const currentNetwork = this.functionsUtil.getCurrentNetwork();
+    const currentNetwork = this.functionsUtil.getRequiredNetwork();
     const showScore = currentNetwork.provider === 'infura';
     const colWidth = showScore ? 1/6 : 1/5;
 

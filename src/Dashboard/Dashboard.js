@@ -53,7 +53,7 @@ class Dashboard extends Component {
   }
 
   async loadMenu() {
-    const currentNetwork = this.functionsUtil.getCurrentNetwork();
+    const currentNetwork = this.functionsUtil.getRequiredNetwork();
 
     const strategies = this.functionsUtil.getGlobalConfig(['strategies']);
     const baseRoute = this.functionsUtil.getGlobalConfig(['dashboard','baseRoute']);
@@ -376,8 +376,9 @@ class Dashboard extends Component {
         this.loadParams();
       });
     }
-    
-    const networkChanged = !prevProps.networkInitialized && this.props.networkInitialized;
+      
+    const requiredNetworkChanged = JSON.stringify(prevProps.network.required) !== JSON.stringify(this.props.network.required);
+    const networkChanged = (!prevProps.networkInitialized && this.props.networkInitialized) || requiredNetworkChanged;
     if (networkChanged){
       await this.loadMenu();
       this.loadParams();
@@ -600,6 +601,9 @@ class Dashboard extends Component {
 
   render() {
     const PageComponent = this.state.pageComponent ? this.state.pageComponent : null;
+    const networkInitialized = this.props.networkInitialized && this.props.network.current.id && this.props.network.required.id;
+    const networkCorrect = this.props.network.isCorrectNetwork;
+    const networkSupported = this.props.network.isSupportedNetwork;
     return (
       <Flex
         width={'100%'}
@@ -645,125 +649,162 @@ class Dashboard extends Component {
           flexDirection={'columns'}
           backgroundColor={'dashboardBg'}
         >
-          {
-            !this.props.networkInitialized || !this.props.accountInizialized || !this.props.contractsInitialized || !PageComponent ? (
-              <Flex
-                width={1}
-                minHeight={'50vg'}
-                alignItems={'center'}
-                flexDirection={'column'}
-                justifyContent={'center'}
-              >
-                {
-                  !this.props.network.isCorrectNetwork ? (
-                    <DashboardCard
-                      cardProps={{
-                        p:3,
-                        mt:3,
-                        width:[1,0.35]
-                      }}
-                    >
-                      <Flex
-                        alignItems={'center'}
-                        flexDirection={'column'}
+          <Flex
+            width={1}
+            flexDirection={'column'}
+          >
+            <DashboardHeader
+              clickEvent={this.state.clickEvent}
+              goToSection={this.goToSection.bind(this)}
+              {...this.props}
+            />
+            {
+              !networkInitialized || !this.props.accountInizialized || !this.props.contractsInitialized || !PageComponent || !networkCorrect || !networkSupported ? (
+                <Flex
+                  width={1}
+                  minHeight={'50vh'}
+                  alignItems={'center'}
+                  flexDirection={'column'}
+                  justifyContent={'center'}
+                >
+                  {
+                    networkInitialized && !networkCorrect ? (
+                      <DashboardCard
+                        cardProps={{
+                          p:3,
+                          mt:3,
+                          width:[1,0.35]
+                        }}
                       >
-                        <Icon
-                          size={'2.3em'}
-                          name={'Warning'}
-                          color={'cellText'}
-                        />
-                        <Text
-                          mt={2}
-                          fontSize={2}
-                          color={'cellText'}
-                          textAlign={'center'}
+                        <Flex
+                          alignItems={'center'}
+                          flexDirection={'column'}
                         >
-                          The <strong>{this.functionsUtil.capitalize(this.props.network.current.name)} Network</strong> is not supported, please switch to the correct network.
-                        </Text>
-                      </Flex>
-                    </DashboardCard>
-                  ) : !this.state.showResetButton ? (
-                    <FlexLoader
-                      textProps={{
-                        textSize:4,
-                        fontWeight:2
-                      }}
-                      loaderProps={{
-                        mb:3,
-                        size:'40px'
-                      }}
-                      flexProps={{
-                        my:3,
-                        flexDirection:'column'
-                      }}
-                      text={ !this.props.networkInitialized ? 'Loading network...' : (!this.props.accountInizialized ? 'Loading account...' : ( !this.props.contractsInitialized ? 'Loading contracts...' : 'Loading assets...' ))}
-                    />
-                  ) : (
-                    <DashboardCard
-                      cardProps={{
-                        p:3,
-                        mt:3,
-                        width:[1,0.35]
-                      }}
-                    >
-                      <Flex
-                        alignItems={'center'}
-                        flexDirection={'column'}
+                          <Icon
+                            size={'2.3em'}
+                            name={'Warning'}
+                            color={'cellText'}
+                          />
+                          <Text
+                            mt={2}
+                            fontSize={2}
+                            color={'cellText'}
+                            textAlign={'center'}
+                          >
+                            You should be on the <strong>{this.functionsUtil.capitalize(this.props.network.required.name)} network</strong>. You are currently connected to the <strong>{this.functionsUtil.capitalize(this.props.network.current.name)} network</strong>, please switch to the correct network.
+                          </Text>
+                          {
+                            parseInt(this.props.network.required.id)!==1 && (
+                              <RoundButton
+                                buttonProps={{
+                                  mt:3,
+                                  width:[1,1/2]
+                                }}
+                                handleClick={e => this.functionsUtil.addEthereumChain(this.props.network.required.id)}
+                              >
+                                Switch Network
+                              </RoundButton>
+                            )
+                          }
+                        </Flex>
+                      </DashboardCard>
+                    ) : networkInitialized && !networkSupported ? (
+                      <DashboardCard
+                        cardProps={{
+                          p:3,
+                          mt:3,
+                          width:[1,0.35]
+                        }}
                       >
-                        <Icon
-                          size={'2.3em'}
-                          name={'Warning'}
-                          color={'cellText'}
-                        />
-                        <Text
-                          mt={2}
-                          fontSize={2}
-                          color={'cellText'}
-                          textAlign={'center'}
+                        <Flex
+                          alignItems={'center'}
+                          flexDirection={'column'}
                         >
-                          Idle can't connect to your wallet!<br />Make sure that your wallet is unlocked and try again.
-                        </Text>
-                        <RoundButton
-                          buttonProps={{
-                            mt:3,
-                            width:[1,1/2]
-                          }}
-                          handleClick={this.logout.bind(this)}
-                        >
-                          Logout
-                        </RoundButton>
-                      </Flex>
-                    </DashboardCard>
-                  )
-                }
-              </Flex>
-            ) : (
-              <Flex
-                width={1}
-                flexDirection={'column'}
-              >
-                <DashboardHeader
-                  clickEvent={this.state.clickEvent}
-                  goToSection={this.goToSection.bind(this)}
-                  {...this.props}
-                />
-                {
-                  PageComponent &&
-                    <PageComponent
-                      {...this.props}
-                      match={{ params:{} }}
-                      urlParams={this.state.params}
-                      changeToken={this.changeToken.bind(this)}
-                      goToSection={this.goToSection.bind(this)}
-                      selectedSection={this.state.selectedSection}
-                      selectedSubsection={this.state.selectedSubsection}
-                      openTooltipModal={this.openTooltipModal.bind(this)}
-                      {...this.state.pageComponentProps}
+                          <Icon
+                            size={'2.3em'}
+                            name={'Warning'}
+                            color={'cellText'}
+                          />
+                          <Text
+                            mt={2}
+                            fontSize={2}
+                            color={'cellText'}
+                            textAlign={'center'}
+                          >
+                            The <strong>{this.functionsUtil.capitalize(this.props.network.current.name)} Network</strong> is not supported, please switch to the correct network.
+                          </Text>
+                        </Flex>
+                      </DashboardCard>
+                    ) : !this.state.showResetButton ? (
+                      <FlexLoader
+                        textProps={{
+                          textSize:4,
+                          fontWeight:2
+                        }}
+                        loaderProps={{
+                          mb:3,
+                          size:'40px'
+                        }}
+                        flexProps={{
+                          my:3,
+                          flexDirection:'column'
+                        }}
+                        text={ !this.props.networkInitialized ? 'Loading network...' : (!this.props.accountInizialized ? 'Loading account...' : ( !this.props.contractsInitialized ? 'Loading contracts...' : 'Loading assets...' ))}
                       />
-                }
-              </Flex>
-            )
-          }
+                    ) : (
+                      <DashboardCard
+                        cardProps={{
+                          p:3,
+                          mt:3,
+                          width:[1,0.35]
+                        }}
+                      >
+                        <Flex
+                          alignItems={'center'}
+                          flexDirection={'column'}
+                        >
+                          <Icon
+                            size={'2.3em'}
+                            name={'Warning'}
+                            color={'cellText'}
+                          />
+                          <Text
+                            mt={2}
+                            fontSize={2}
+                            color={'cellText'}
+                            textAlign={'center'}
+                          >
+                            Idle can't connect to your wallet!<br />Make sure that your wallet is unlocked and try again.
+                          </Text>
+                          <RoundButton
+                            buttonProps={{
+                              mt:3,
+                              width:[1,1/2]
+                            }}
+                            handleClick={this.logout.bind(this)}
+                          >
+                            Logout
+                          </RoundButton>
+                        </Flex>
+                      </DashboardCard>
+                    )
+                  }
+                </Flex>
+              ) : PageComponent && (
+                <PageComponent
+                  {...this.props}
+                  match={{ params:{} }}
+                  urlParams={this.state.params}
+                  changeToken={this.changeToken.bind(this)}
+                  goToSection={this.goToSection.bind(this)}
+                  selectedSection={this.state.selectedSection}
+                  selectedSubsection={this.state.selectedSubsection}
+                  openTooltipModal={this.openTooltipModal.bind(this)}
+                  {...this.state.pageComponentProps}
+                />
+              )
+            }
+          </Flex>
         </Flex>
         {
           this.state.currentNetwork && 

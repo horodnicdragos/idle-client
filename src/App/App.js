@@ -53,6 +53,7 @@ class App extends Component {
     width: window.innerWidth,
     availableStrategies: null,
     height: window.innerHeight,
+    config:globalConfigs.network,
     unsubscribeFromHistory: null,
     enableUnderlyingWithdraw: false,
   };
@@ -193,7 +194,7 @@ class App extends Component {
   async loadAvailableTokens() {
     const newState = {};
     const availableStrategies = {};
-    const requiredNetwork = this.state.network && this.state.network.isCorrectNetwork ? (this.state.network.current.id || this.state.network.required.id) : globalConfigs.network.requiredNetwork;
+    const requiredNetwork = this.state.network && this.state.network.isCorrectNetwork ? (this.state.network.current.id || this.state.network.required.id) : this.state.config.requiredNetwork;
 
     // console.log('loadAvailableTokens',this.state.network,requiredNetwork,availableTokens);
 
@@ -259,6 +260,21 @@ class App extends Component {
     // console.log('setStrategyToken',newState);
 
     await this.setState(newState,callback);
+  }
+
+  async setRequiredNetwork(requiredNetwork){
+    requiredNetwork = parseInt(requiredNetwork);
+    if (globalConfigs.network.enabledNetworks.includes(requiredNetwork)){
+      this.functionsUtil.setLocalStorage('requiredNetwork',requiredNetwork);
+      // console.log('setRequiredNetwork',requiredNetwork);
+      this.functionsUtil.addEthereumChain(requiredNetwork);
+      return this.setState(prevState => ({
+        config:{
+          ...prevState.config,
+          requiredNetwork
+        }
+      }));
+    }
   }
 
   async setStrategy(selectedStrategy) {
@@ -329,6 +345,12 @@ class App extends Component {
     const themeMode = this.functionsUtil.getStoredItem('themeMode',false);
     if (themeMode){
       this.setThemeMode(themeMode);
+    }
+
+    const requiredNetwork = this.functionsUtil.getStoredItem('requiredNetwork',false);
+    // console.log('requiredNetwork',requiredNetwork);
+    if (requiredNetwork){
+      this.setRequiredNetwork(requiredNetwork);
     }
 
     window.closeIframe = (w) => {
@@ -438,9 +460,6 @@ class App extends Component {
     return null;
   };
 
-  // Optional parameters to pass into RimbleWeb3
-  config = globalConfigs.network;
-
   showRoute(route) {
     return this.setState({ route });
   }
@@ -509,6 +528,8 @@ class App extends Component {
         break;
       }
     }
+
+    // console.log('setConnector',connectorName,walletProvider);
 
     this.functionsUtil.setLocalStorage('connectorName', connectorName);
     this.functionsUtil.setLocalStorage('walletProvider', walletProvider);
@@ -607,8 +628,8 @@ class App extends Component {
                   <RimbleWeb3
                     context={context}
                     isMobile={isMobile}
-                    config={this.config}
                     connectors={connectors}
+                    config={this.state.config}
                     theme={this.state.selectedTheme}
                     cachedData={this.state.cachedData}
                     tokenConfig={this.state.tokenConfig}
@@ -745,6 +766,7 @@ class App extends Component {
                                       setCurrentSection={this.setCurrentSection.bind(this)}
                                       connectAndValidateAccount={connectAndValidateAccount}
                                       contractMethodSendWrapper={contractMethodSendWrapper}
+                                      setRequiredNetwork={this.setRequiredNetwork.bind(this)}
                                       initContractCustomProvider={initContractCustomProvider}
                                       setCallbackAfterLogin={this.setCallbackAfterLogin.bind(this)}
                                     />

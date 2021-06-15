@@ -1171,7 +1171,7 @@ const globalConfigs = {
     firstBlockNumber:8119247,
     requiredConfirmations: 1,
     accountBalanceMinimum: 0, // in ETH for gas fees
-    enabledNetworks:[1,42,1337,5,137,80001],
+    enabledNetworks:[1,137],
     providers:{
       infura:{
         key:env.REACT_APP_INFURA_KEY,

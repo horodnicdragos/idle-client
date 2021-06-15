@@ -278,7 +278,7 @@ class Landing extends Component {
       });
     });
 
-    const currentNetworkId = this.functionsUtil.getCurrentNetworkId();
+    const currentNetworkId = this.functionsUtil.getRequiredNetworkId();
     const availableStrategies = Object.keys(globalConfigs.strategies).filter( strategy => globalConfigs.strategies[strategy].availableNetworks.includes(currentNetworkId) );
 
     return (
