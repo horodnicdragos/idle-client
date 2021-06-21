@@ -1113,25 +1113,29 @@ const globalConfigs = {
         baseToken:'ETH',
         provider:'infura',
         network:'mainnet',
-        explorer:'etherscan'
+        explorer:'etherscan',
+        chainName:'Ethereum Mainnet',
       },
       42:{
         name:'Kovan',
         baseToken:'ETH',
         provider:'infura',
-        explorer:'etherscan'
+        explorer:'etherscan',
+        chainName:'Ethereum Testnet Kovan',
       },
       3:{
         name:'Ropsten',
         baseToken:'ETH',
         provider:'infura',
-        explorer:'etherscan'
+        explorer:'etherscan',
+        chainName:'Ethereum Testnet Ropsten',
       },
       4:{
         name:'Rinkeby',
         baseToken:'ETH',
         provider:'infura',
-        explorer:'etherscan'
+        explorer:'etherscan',
+        chainName:'Ethereum Testnet Rinkeby',
       },
       137:{
         name:'Matic',
@@ -1140,20 +1144,23 @@ const globalConfigs = {
         baseToken:'MATIC',
         explorer:'polygon',
         provider:'polygon',
+        chainName:'Matic Mainnet',
       },
       5:{
-        name:'Goerli',
+        name:'Görli',
         baseToken:'ETH',
         version:'mumbai',
         network:'testnet',
         provider:'infura',
-        explorer:'etherscan'
+        explorer:'etherscan',
+        chainName:'Ethereum Testnet Görli',
       },
       1337:{
         name:'Hardhat',
         baseToken:'ETH',
         provider:'infura',
-        explorer:'etherscan'
+        explorer:'etherscan',
+        chainName:'Ethereum Mainnet',
       },
       80001:{
         name:'Mumbai',
@@ -1161,7 +1168,8 @@ const globalConfigs = {
         network:'testnet',
         baseToken:'MATIC',
         explorer:'polygon',
-        provider:'polygon'
+        provider:'polygon',
+        chainName:'Matic Testnet Mumbai',
       }
     },
     isForked:false, // If TRUE the tx confirmation callback is fired on the receipt
@@ -1197,6 +1205,9 @@ const globalConfigs = {
           137:1,
           5:80001,
           80001:5
+        },
+        publicRpc:{
+          137:'https://rpc-mainnet.matic.network'
         },
         rpc:{
           // 1:'https://rpc-mainnet.maticvigil.com/v1/',

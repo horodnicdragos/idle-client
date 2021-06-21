@@ -63,6 +63,7 @@ export default {
     'near-white': '#f4f4f4',
     white: '#fff',
     transparent: 'transparent',
+    green:'#00b84a',
     /*
     NEW COLORS
     */
