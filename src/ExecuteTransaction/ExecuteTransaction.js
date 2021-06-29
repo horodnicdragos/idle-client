@@ -118,40 +118,6 @@ class ExecuteTransaction extends Component {
     } else {
       this.functionsUtil.contractMethodSendWrapper(this.props.contractName,this.props.methodName,params,callback,callbackReceipt);
     }
-    
-    this.setState((prevState) => ({
-      txStatus:'loading',
-      processing: {
-        ...prevState.processing,
-        loading:true
-      }
-    }));
-
-    let params = this.props.params;
-    if (typeof this.props.getTransactionParams === 'function'){
-      params = this.props.getTransactionParams();
-    } else if (typeof this.props.getTransactionParamsAsync === 'function'){
-      params = await this.props.getTransactionParamsAsync();
-    }
-
-    if (!params){
-      this.setState((prevState) => ({
-        txStatus:null,
-        processing: {
-          ...prevState.processing,
-          loading:false
-        }
-      }));
-      return false;
-    }
-
-    // console.log('ExecuteTransaction',this.props.contractName,this.props.methodName,params);
-
-    if (this.props.sendRawTransaction){
-      this.functionsUtil.contractMethodSendWrapper(this.props.contractName,this.props.methodName,params,callback,callbackReceipt,null,true,params);
-    } else {
-      this.functionsUtil.contractMethodSendWrapper(this.props.contractName,this.props.methodName,params,callback,callbackReceipt);
-    }
   }
 
   render() {

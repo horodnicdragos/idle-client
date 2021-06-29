@@ -84,6 +84,7 @@ class Notifications extends Component {
 
     // Get stored lastOpenTimestamp for notifications
     const currentNetwork = this.functionsUtil.getRequiredNetwork();
+    const isMainnet = currentNetwork.id === 1;
     const governanceConfig = this.functionsUtil.getGlobalConfig(['governance']);
     const batchDepositConfig = this.functionsUtil.getGlobalConfig(['tools','batchDeposit']);
     const polygonBridgeConfig = this.functionsUtil.getGlobalConfig(['tools','polygonBridge']);
